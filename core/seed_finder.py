@@ -26,8 +26,6 @@ class RunConfig:
     default_rolls: int = 1
     max_gap: int = 4
     max_advances: int = 3000
-    look_for_shiny: bool = True
-    look_for_alpha: bool = False
     save_txt: bool = False
 
     def get_rolls(self, species_id: int) -> int:
@@ -48,7 +46,6 @@ class AdvanceResult:
     nature: str
     height: int
     weight: int
-    landmark_identifier: str
     catch_order: int
 
 
@@ -302,7 +299,6 @@ class SeedFinder:
                         nature=NATURES_EN[nature_idx],
                         height=int(height),
                         weight=int(weight),
-                        landmark_identifier=identifier,
                         catch_order=catch_order,
                     )
                     result_cb(result)

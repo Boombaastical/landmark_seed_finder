@@ -1,0 +1,80 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+          - os: ubuntu-latest
+            platform: linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller PyQt6
+          pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        run: pyinstaller landmark_seed_finder.spec
+
+      - name: Zip (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/LandmarkSeedFinder `
+            -DestinationPath "LandmarkSeedFinder-windows-${{ github.ref_name }}.zip"
+
+      - name: Zip (macOS / Linux)
+        if: matrix.os != 'windows-latest'
+        run: |
+          zip -r "LandmarkSeedFinder-${{ matrix.platform }}-${{ github.ref_name }}.zip" \
+            dist/LandmarkSeedFinder
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: LandmarkSeedFinder-${{ matrix.platform }}-${{ github.ref_name }}.zip
+          body: |
+            ## Landmark Seed Finder ${{ github.ref_name }}
+
+            ### Downloads
+            | Platform | File |
+            |----------|------|
+            | Windows 10/11 | `LandmarkSeedFinder-windows-${{ github.ref_name }}.zip` |
+            | macOS | `LandmarkSeedFinder-macos-${{ github.ref_name }}.zip` |
+            | Linux | `LandmarkSeedFinder-linux-${{ github.ref_name }}.zip` |
+
+            ### How to run
+            1. Download the zip for your platform and extract it
+            2. **Windows**: run `LandmarkSeedFinder.exe`
+            3. **macOS**: run `LandmarkSeedFinder` — if blocked by Gatekeeper, right-click → Open
+            4. **Linux**: `chmod +x LandmarkSeedFinder && ./LandmarkSeedFinder`
+
+            ### Requirements
+            A GPU with OpenCL support is required. See [DRIVERS.md](DRIVERS.md) if you get an OpenCL error on launch.

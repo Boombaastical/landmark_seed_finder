@@ -41,7 +41,6 @@ class SeedWorker(QThread):
     progress_message = pyqtSignal(str)
     result_found = pyqtSignal(object)              # AdvanceResult
     landmark_started = pyqtSignal(int, int, str)   # (catch_order, total, identifier)
-    landmark_done = pyqtSignal(int, str)           # (catch_order, identifier)
     all_done = pyqtSignal()
     error_occurred = pyqtSignal(str)
 
@@ -101,8 +100,6 @@ class SeedWorker(QThread):
 
             if self._batch_folder and self._config.save_txt and landmark_results:
                 self._write_txt(job, landmark_results)
-
-            self.landmark_done.emit(job.catch_order, job.identifier)
 
         self.all_done.emit()
 

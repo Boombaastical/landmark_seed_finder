@@ -434,7 +434,5 @@ class MapWindow(QMainWindow):
             default_rolls=1,
             max_gap=self.max_gap_spin.value(),
             max_advances=self.max_advances_spin.value(),
-            look_for_shiny=self.shiny_check.isChecked(),
-            look_for_alpha=self.alpha_check.isChecked(),
             save_txt=self.settings.value("save_txt_file", False, bool),
         )
