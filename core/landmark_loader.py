@@ -27,7 +27,9 @@ SEREBII_NAMES = [
     "alabastericelands",
 ]
 
-_MAPS_DIR = os.path.join(os.path.dirname(__file__), "..", "resources", "maps")
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_MAPS_DIR = os.path.join(_PROJECT_ROOT, "resources", "maps")
+DEFAULT_STORAGE_DIR = os.path.join(_PROJECT_ROOT, "batches")
 
 # Paths to stitched map tile images per map per zoom level (0, 1, 2).
 # Falls back to placeholder in MapCanvas when a file doesn't exist.
@@ -92,8 +94,23 @@ def get_name_en(species: int, form: int = 0, is_alpha: bool = False) -> str:
     )
 
 
+def is_shaking_landmark(data: dict, map_index: int) -> bool:
+    """Return True if this landmark has a Pokémon encounter table (i.e., it shakes)."""
+    try:
+        enc_table = ENCOUNTER_INFORMATION_LA[map_index + 1][
+            np.uint64(data["encounterTable"])
+        ]
+        for slot in enc_table.slots:
+            slot_rec = np.rec.array(slot, dtype=SlotLA.dtype)
+            if int(slot_rec.species) != 0:
+                return True
+    except (KeyError, IndexError, TypeError):
+        pass
+    return False
+
+
 def get_all_landmark_species() -> list[int]:
-    """Collect every unique species that can appear at any landmark across all maps."""
+    """Collect every unique species that can appear at any shaking landmark across all maps."""
     species_set: set[int] = set()
     for map_index in range(len(MAPS)):
         try:
@@ -101,6 +118,8 @@ def get_all_landmark_species() -> list[int]:
         except Exception:
             continue
         for data in landmarks.values():
+            if not is_shaking_landmark(data, map_index):
+                continue
             try:
                 enc_table = ENCOUNTER_INFORMATION_LA[map_index + 1][
                     np.uint64(data["encounterTable"])

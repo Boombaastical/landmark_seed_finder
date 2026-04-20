@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
     QToolButton,
 )
 
-from core.landmark_loader import MAP_TILE_IMAGES, classify_landmark, world_to_pixel
+from core.landmark_loader import MAP_TILE_IMAGES, classify_landmark, is_shaking_landmark, world_to_pixel
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 LANDMARKS_DIR = os.path.join(ASSETS_DIR, "landmarks")
@@ -349,6 +349,8 @@ class MapCanvas(QGraphicsView):
         from core.landmark_loader import get_all_landmarks
         landmarks = get_all_landmarks(map_index)
         for identifier, data in landmarks.items():
+            if not is_shaking_landmark(data, map_index):
+                continue
             pos = data.get("position", [512, 0, 512])
             game_x, game_z = float(pos[0]), float(pos[2])
             self._landmark_positions[identifier] = (game_x, game_z)

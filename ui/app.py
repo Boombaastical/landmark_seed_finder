@@ -57,6 +57,9 @@ def run():
 
     ensure_placeholder_assets()
 
+    from core.landmark_loader import DEFAULT_STORAGE_DIR
+    os.makedirs(DEFAULT_STORAGE_DIR, exist_ok=True)
+
     settings = QSettings("LandmarkSeedFinder", "Settings")
 
     from ui.map_window import MapWindow

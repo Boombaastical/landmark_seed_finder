@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from core.landmark_loader import get_all_landmark_species, get_name_en
+from core.landmark_loader import DEFAULT_STORAGE_DIR, get_all_landmark_species, get_name_en
 
 
 class SettingsDialog(QDialog):
@@ -116,7 +116,7 @@ class SettingsDialog(QDialog):
         self.pa8_storage_edit = QLineEdit()
         self.pa8_storage_edit.setPlaceholderText("Batch output folder…")
         self.pa8_storage_edit.setText(
-            os.path.expanduser(self.settings.value("pa8_storage_folder", "~/Downloads"))
+            self.settings.value("pa8_storage_folder", DEFAULT_STORAGE_DIR)
         )
         st_row.addWidget(self.pa8_storage_edit)
         st_browse_btn = QPushButton("Browse…")

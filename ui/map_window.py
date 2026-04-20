@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from core.landmark_loader import MAP_DISPLAY_NAMES, load_landmark
+from core.landmark_loader import DEFAULT_STORAGE_DIR, MAP_DISPLAY_NAMES, load_landmark
 from core.pa8_reader import parse_pa8_file, read_pa8_files_from_folder
 from core.seed_finder import RunConfig, compute_rolls
 from core.statistics import format_stats, load_stats, update_stats
@@ -220,7 +220,7 @@ class MapWindow(QMainWindow):
             os.path.expanduser(self.settings.value("pa8_download_folder", "~/Downloads"))
         )
         self.storage_folder_edit.setText(
-            os.path.expanduser(self.settings.value("pa8_storage_folder", "~/Downloads"))
+            self.settings.value("pa8_storage_folder", DEFAULT_STORAGE_DIR)
         )
 
     def _open_settings(self):
