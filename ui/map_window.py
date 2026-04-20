@@ -1,8 +1,10 @@
 """Main application window."""
 
 import os
+import shutil
 
 from PyQt6.QtCore import QSettings, Qt
+from PyQt6.QtGui import QKeySequence
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -28,7 +30,7 @@ from core.statistics import format_stats, load_stats, update_stats
 from ui.map_canvas import MapCanvas
 from ui.results_table import ResultsTable
 from ui.settings_dialog import SettingsDialog
-from ui.worker import SeedJob, SeedWorker
+from ui.worker import SeedJob, SeedWorker, _next_batch_folder
 
 
 class MapWindow(QMainWindow):
@@ -37,6 +39,9 @@ class MapWindow(QMainWindow):
         self.settings = settings
         self._worker = None  # SeedWorker or None
         self._current_results = []  # AdvanceResult list for current run
+        self._batch_folder = ""   # batch folder for the current session
+        self._run_index = 0       # increments each Generate within a session
+        self._session_pa8_paths = []  # pa8 paths to move on Reset
         self.setWindowTitle("Landmark Seed Finder")
         self.resize(1200, 850)
 
@@ -160,12 +165,13 @@ class MapWindow(QMainWindow):
 
         # Action buttons
         btn_row = QHBoxLayout()
-        reset_btn = QPushButton("Reset")
+        reset_btn = QPushButton("Reset (R)")
+        reset_btn.setShortcut(QKeySequence("R"))
         reset_btn.clicked.connect(self._reset_selection)
         btn_row.addWidget(reset_btn)
         self.generate_btn = QPushButton("Generate")
         self.generate_btn.clicked.connect(self._on_generate)
-        self.generate_btn.setDefault(True)
+        self.generate_btn.setShortcut(QKeySequence(Qt.Key.Key_Return))
         btn_row.addWidget(self.generate_btn)
         layout.addLayout(btn_row)
 
@@ -237,6 +243,10 @@ class MapWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _on_map_changed(self, index: int):
+        self._batch_folder = ""
+        self._run_index = 0
+        self._session_pa8_paths = []
+        self.results_table.clear_results()
         self.canvas.load_map(index)
         self.settings.setValue("last_map_index", index)
 
@@ -264,6 +274,18 @@ class MapWindow(QMainWindow):
             self.settings.setValue("pa8_storage_folder", folder)
 
     def _reset_selection(self):
+        if self._batch_folder and self._session_pa8_paths:
+            for path in self._session_pa8_paths:
+                if os.path.exists(path):
+                    try:
+                        shutil.move(path, os.path.join(self._batch_folder, os.path.basename(path)))
+                    except OSError as e:
+                        QMessageBox.warning(self, "Move Error", f"Could not move {path}:\n{e}")
+        self._batch_folder = ""
+        self._run_index = 0
+        self._session_pa8_paths = []
+        self.results_table.clear_results()
+        self.canvas.set_locked(False)
         self.canvas.clear_selection()
 
     # ------------------------------------------------------------------
@@ -321,7 +343,20 @@ class MapWindow(QMainWindow):
             ))
 
         config = self._build_run_config()
-        storage_folder = self.storage_folder_edit.text().strip()
+
+        # Create the batch folder once per session (first Generate after Reset)
+        if not self._batch_folder:
+            storage_folder = self.storage_folder_edit.text().strip()
+            if storage_folder and os.path.isdir(storage_folder):
+                try:
+                    self._batch_folder = _next_batch_folder(storage_folder)
+                except Exception as e:
+                    QMessageBox.warning(self, "Batch Folder Error",
+                                        f"Could not create batch folder:\n{e}")
+
+        # Track pa8 paths on first run so Reset knows what to move
+        if not self._session_pa8_paths:
+            self._session_pa8_paths = [job.pa8_path for job in jobs]
 
         self._current_results.clear()
         self.results_table.clear_results()
@@ -330,7 +365,14 @@ class MapWindow(QMainWindow):
         self.progress_bar.show()
         self.step_label.show()
 
-        self._worker = SeedWorker(jobs, config, storage_folder=storage_folder, parent=self)
+        self._worker = SeedWorker(
+            jobs, config,
+            batch_folder=self._batch_folder,
+            run_index=self._run_index,
+            parent=self,
+        )
+        self._run_index += 1
+        self._worker.landmark_started.connect(self._on_landmark_started)
         self._worker.progress_message.connect(self._on_progress_message)
         self._worker.result_found.connect(self._on_result_found)
         self._worker.error_occurred.connect(
@@ -339,12 +381,18 @@ class MapWindow(QMainWindow):
         self._worker.all_done.connect(self._on_generation_done)
         self._worker.start()
 
+    def _on_landmark_started(self, catch_order: int, total: int, identifier: str):
+        self.status_bar.showMessage(f"Processing file {catch_order + 1}/{total}…")
+
     def _on_progress_message(self, msg: str):
-        self.status_bar.showMessage(msg)
         self.step_label.setText(msg)
 
     def _on_result_found(self, r):
         self._current_results.append(r)
+        if self.shiny_check.isChecked() and not r.is_shiny:
+            return
+        if self.alpha_check.isChecked() and not r.is_alpha:
+            return
         self.results_table.add_row(r)
 
     def _on_generation_done(self):
@@ -352,6 +400,7 @@ class MapWindow(QMainWindow):
         self._set_controls_enabled(True)
         self.progress_bar.hide()
         self.step_label.hide()
+        self.canvas.set_locked(True)
 
         # Update statistics
         stats = update_stats(self._current_results)

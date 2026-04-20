@@ -207,6 +207,7 @@ class MapCanvas(QGraphicsView):
         self._landmark_items: dict = {}  # identifier -> LandmarkIconItem
         self._selected_order: list = []
         self._landmark_positions: dict = {}  # identifier -> (game_x, game_z)
+        self._locked: bool = False
 
         # Fade-out preview overlay (top-right)
         self._preview_label = QLabel(self)
@@ -334,6 +335,7 @@ class MapCanvas(QGraphicsView):
     def load_map(self, map_index: int):
         self._map_index = map_index
         self._zoom_level = 0
+        self._locked = False
         self._selected_order.clear()
         self._landmark_items.clear()
         self._landmark_positions.clear()
@@ -389,7 +391,12 @@ class MapCanvas(QGraphicsView):
             else:
                 item.setVisible(True)
 
+    def set_locked(self, locked: bool):
+        self._locked = locked
+
     def toggle_landmark(self, identifier: str):
+        if self._locked:
+            return
         if identifier in self._selected_order:
             self._selected_order.remove(identifier)
         else:

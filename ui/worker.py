@@ -2,7 +2,6 @@
 
 import os
 import re
-import shutil
 from dataclasses import dataclass
 
 from PyQt6.QtCore import QThread, pyqtSignal
@@ -40,9 +39,9 @@ def _next_batch_folder(base_dir: str) -> str:
 
 class SeedWorker(QThread):
     progress_message = pyqtSignal(str)
-    result_found = pyqtSignal(object)        # AdvanceResult
-    landmark_started = pyqtSignal(int, str)  # (catch_order, identifier)
-    landmark_done = pyqtSignal(int, str)     # (catch_order, identifier)
+    result_found = pyqtSignal(object)              # AdvanceResult
+    landmark_started = pyqtSignal(int, int, str)   # (catch_order, total, identifier)
+    landmark_done = pyqtSignal(int, str)           # (catch_order, identifier)
     all_done = pyqtSignal()
     error_occurred = pyqtSignal(str)
 
@@ -50,15 +49,16 @@ class SeedWorker(QThread):
         self,
         jobs: list,
         config: RunConfig,
-        storage_folder: str = "",
+        batch_folder: str = "",
+        run_index: int = 0,
         parent=None,
     ):
         super().__init__(parent)
         self._jobs = jobs
         self._config = config
-        self._storage_folder = storage_folder
+        self._batch_folder = batch_folder
+        self._run_index = run_index
         self._cancelled = False
-        self._batch_folder = ""
 
     def cancel(self):
         self._cancelled = True
@@ -71,22 +71,12 @@ class SeedWorker(QThread):
             self.all_done.emit()
             return
 
-        # Create the batch folder once per run if a storage folder is configured
-        if self._storage_folder and os.path.isdir(self._storage_folder):
-            try:
-                self._batch_folder = _next_batch_folder(self._storage_folder)
-            except Exception as e:
-                self.error_occurred.emit(f"Could not create batch folder: {e}")
-
         for job in self._jobs:
             if self._cancelled:
                 break
 
-            self.landmark_started.emit(job.catch_order, job.identifier)
-            self.progress_message.emit(
-                f"Processing landmark {job.catch_order + 1}/{len(self._jobs)} "
-                f"(ID: {job.identifier})…"
-            )
+            self.landmark_started.emit(job.catch_order, len(self._jobs), job.identifier)
+            self.progress_message.emit(f"Searching fixed seeds (GPU)…")
 
             landmark_results = []
 
@@ -109,26 +99,17 @@ class SeedWorker(QThread):
                     f"Error processing landmark {job.identifier}: {e}"
                 )
 
-            if self._batch_folder:
-                self._move_pa8(job)
-                if self._config.save_txt and landmark_results:
-                    self._write_txt(job, landmark_results)
+            if self._batch_folder and self._config.save_txt and landmark_results:
+                self._write_txt(job, landmark_results)
 
             self.landmark_done.emit(job.catch_order, job.identifier)
 
         self.all_done.emit()
 
-    def _move_pa8(self, job: SeedJob):
-        dest = os.path.join(self._batch_folder, os.path.basename(job.pa8_path))
-        try:
-            shutil.move(job.pa8_path, dest)
-        except OSError as e:
-            self.error_occurred.emit(f"Could not move {job.pa8_path}: {e}")
-
     def _write_txt(self, job: SeedJob, results: list):
         out_path = os.path.join(
             self._batch_folder,
-            f"{job.catch_order}-{job.map_index}-{job.identifier}-results.txt",
+            f"{self._run_index:02d}-{job.catch_order}-{job.map_index}-{job.identifier}-results.txt",
         )
         try:
             with open(out_path, "w", encoding="utf-8") as f:

@@ -12,31 +12,49 @@ from core.seed_finder import AdvanceResult
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
 _COLUMNS = [
-    "Advance", "Species", "Gender", "α", "✦",
+    "Advance", "Landmark #", "Species", "Gender", "α", "✦",
     "HP", "Atk", "Def", "SpA", "SpD", "Spe",
     "Level", "Ability", "Nature", "Height", "Weight",
 ]
 
 _COL_ADVANCE = 0
-_COL_SPECIES = 1
-_COL_GENDER = 2
-_COL_ALPHA = 3
-_COL_SHINY = 4
-_COL_HP = 5
-_COL_ATK = 6
-_COL_DEF = 7
-_COL_SPA = 8
-_COL_SPD = 9
-_COL_SPE = 10
-_COL_LEVEL = 11
-_COL_ABILITY = 12
-_COL_NATURE = 13
-_COL_HEIGHT = 14
-_COL_WEIGHT = 15
+_COL_LANDMARK = 1
+_COL_SPECIES = 2
+_COL_GENDER = 3
+_COL_ALPHA = 4
+_COL_SHINY = 5
+_COL_HP = 6
+_COL_ATK = 7
+_COL_DEF = 8
+_COL_SPA = 9
+_COL_SPD = 10
+_COL_SPE = 11
+_COL_LEVEL = 12
+_COL_ABILITY = 13
+_COL_NATURE = 14
+_COL_HEIGHT = 15
+_COL_WEIGHT = 16
+
+
+class _NumericItem(QTableWidgetItem):
+    def __lt__(self, other):
+        mine = self.data(Qt.ItemDataRole.UserRole)
+        theirs = other.data(Qt.ItemDataRole.UserRole)
+        if mine is not None and theirs is not None:
+            return mine < theirs
+        return super().__lt__(other)
 
 
 def _cell(text: str, align=Qt.AlignmentFlag.AlignCenter) -> QTableWidgetItem:
     item = QTableWidgetItem(str(text))
+    item.setTextAlignment(align)
+    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+    return item
+
+
+def _ncell(value, align=Qt.AlignmentFlag.AlignCenter) -> _NumericItem:
+    item = _NumericItem(str(value))
+    item.setData(Qt.ItemDataRole.UserRole, int(value))
     item.setTextAlignment(align)
     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
     return item
@@ -52,7 +70,7 @@ class ResultsTable(QTableWidget):
             self.setColumnWidth(col, 28)
             hdr.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
         hdr.setSectionResizeMode(_COL_SPECIES, QHeaderView.ResizeMode.Stretch)
-        for col in (_COL_ADVANCE, _COL_GENDER, _COL_LEVEL, _COL_ABILITY,
+        for col in (_COL_ADVANCE, _COL_LANDMARK, _COL_GENDER, _COL_LEVEL, _COL_ABILITY,
                     _COL_NATURE, _COL_HEIGHT, _COL_WEIGHT):
             hdr.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
         for col in (_COL_HP, _COL_ATK, _COL_DEF, _COL_SPA, _COL_SPD, _COL_SPE):
@@ -88,7 +106,8 @@ class ResultsTable(QTableWidget):
         row = self.rowCount()
         self.insertRow(row)
 
-        self.setItem(row, _COL_ADVANCE, _cell(r.advance))
+        self.setItem(row, _COL_ADVANCE, _ncell(r.advance))
+        self.setItem(row, _COL_LANDMARK, _ncell(r.catch_order + 1))
         self.setItem(
             row,
             _COL_SPECIES,
@@ -115,16 +134,16 @@ class ResultsTable(QTableWidget):
         self.setItem(row, _COL_SHINY, shiny_item)
 
         for col_offset, iv in enumerate(r.ivs):
-            self.setItem(row, _COL_HP + col_offset, _cell(iv))
+            self.setItem(row, _COL_HP + col_offset, _ncell(iv))
 
-        self.setItem(row, _COL_LEVEL, _cell(r.level))
-        self.setItem(row, _COL_ABILITY, _cell(r.ability))
+        self.setItem(row, _COL_LEVEL, _ncell(r.level))
+        self.setItem(row, _COL_ABILITY, _ncell(r.ability))
         self.setItem(
             row,
             _COL_NATURE,
             _cell(r.nature, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter),
         )
-        self.setItem(row, _COL_HEIGHT, _cell(r.height))
-        self.setItem(row, _COL_WEIGHT, _cell(r.weight))
+        self.setItem(row, _COL_HEIGHT, _ncell(r.height))
+        self.setItem(row, _COL_WEIGHT, _ncell(r.weight))
 
         self.setSortingEnabled(True)
