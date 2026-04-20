@@ -50,10 +50,16 @@ jobs:
           Compress-Archive -Path dist/LandmarkSeedFinder `
             -DestinationPath "LandmarkSeedFinder-windows-${{ github.ref_name }}.zip"
 
-      - name: Zip (macOS / Linux)
-        if: matrix.os != 'windows-latest'
+      - name: Zip (macOS — .app bundle)
+        if: matrix.os == 'macos-latest'
         run: |
-          zip -r "LandmarkSeedFinder-${{ matrix.platform }}-${{ github.ref_name }}.zip" \
+          zip -r "LandmarkSeedFinder-macos-${{ github.ref_name }}.zip" \
+            dist/LandmarkSeedFinder.app
+
+      - name: Zip (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          zip -r "LandmarkSeedFinder-linux-${{ github.ref_name }}.zip" \
             dist/LandmarkSeedFinder
 
       - name: Publish to GitHub Release
