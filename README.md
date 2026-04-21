@@ -7,10 +7,13 @@
  	- Create a new folder where you want to store the file
  	- Ctrl-C on the folder where you want it installed (e.g. /Users/boombaastical/Documents/landmark_seed_finder)
   	- Go back to your command prompt / terminal and type `cd [directory]`, for example `cd /Users/boombaastical/Documents/landmark_seed_finder`
-  	- Then, on the main page of the landmark_seed_finder, and go to the green button written `<> Code` and click on it, and next to the link that appears click the copy icon (the link should be <u>https://github.com/Boombaastical/landmark_seed_finder</u>
+  	- Then, on the main page of the landmark_seed_finder, and go to the green button written `<> Code` and click on it, and next to the link that appears click the copy icon (the link should be https://github.com/Boombaastical/landmark_seed_finder)
   	- Go back to your command prompt / terminal and type:
+
 ```git clone [Ctrl-V, paste the link you just copied] --recurse-submodules```
+
 For example, it could look like this:
+
 ```git clone (https://github.com/Boombaastical/landmark_seed_finder) --recurse-submodules```
 
 
