@@ -2,9 +2,22 @@
 
 ## Pokemon: Legends Arceus landmark (tree/rock) seed finder from a PA8 dumps of pokemon
 
+- Installation:
+	- Open your command prompt / terminal
+ 	- Create a new folder where you want to store the file
+ 	- Ctrl-C on the folder where you want it installed (e.g. /Users/boombaastical/Documents/landmark_seed_finder)
+  	- Go back to your command prompt / terminal and type `cd [directory]`, for example `cd /Users/boombaastical/Documents/landmark_seed_finder`
+  	- Then, on the main page of the landmark_seed_finder, and go to the green button written `<> Code` and click on it, and next to the link that appears click the copy icon (the link should be <u>https://github.com/Boombaastical/landmark_seed_finder</u>
+  	- Go back to your command prompt / terminal and type:
+```git clone [Ctrl-V, paste the link you just copied] --recurse-submodules```
+For example, it could look like this:
+```git clone (https://github.com/Boombaastical/landmark_seed_finder) --recurse-submodules```
+
+
 - Usage:
-	- Place .pa8 files next to executable (.exe or .py) with the name format ``[Order Caught]-[Map Index]-[Landmark ID].pa8``
-		- E.g.: 0-0-0807.pa8 would be first Pokémon caught (0), on map Obsidian Fieldlands (0) with map ID 0807.
+	- 
+ 	- Download the pa8 files to a specific folder (folder A)
+	- 
 
 		- Map indexes:
 			- 0: Obsidian Fieldlands
