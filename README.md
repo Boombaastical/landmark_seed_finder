@@ -76,7 +76,7 @@
 
 	- Then, copy-paste the following command in your command prompt / terminal:
 
-	```python main.py```
+	```python3 main.py```
 
 - Usage:
 	- Open the program `using python main.py` (if not already done)
