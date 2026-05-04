@@ -47,6 +47,7 @@ class AdvanceResult:
     height: int
     weight: int
     catch_order: int
+    identifier: str = ""
 
 
 def compute_rolls(research_level: int, shiny_charm: bool) -> int:
@@ -300,6 +301,7 @@ class SeedFinder:
                         height=int(height),
                         weight=int(weight),
                         catch_order=catch_order,
+                        identifier=identifier,
                     )
                     result_cb(result)
 

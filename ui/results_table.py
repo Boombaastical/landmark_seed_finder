@@ -12,28 +12,29 @@ from core.seed_finder import AdvanceResult
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
 _COLUMNS = [
-    "Advance", "Landmark #", "Species", "Gender", "α", "✦",
+    "Advance", "Landmark #", "Landmark Code", "Species", "Gender", "α", "✦",
     "HP", "Atk", "Def", "SpA", "SpD", "Spe",
     "Level", "Ability", "Nature", "Height", "Weight",
 ]
 
 _COL_ADVANCE = 0
 _COL_LANDMARK = 1
-_COL_SPECIES = 2
-_COL_GENDER = 3
-_COL_ALPHA = 4
-_COL_SHINY = 5
-_COL_HP = 6
-_COL_ATK = 7
-_COL_DEF = 8
-_COL_SPA = 9
-_COL_SPD = 10
-_COL_SPE = 11
-_COL_LEVEL = 12
-_COL_ABILITY = 13
-_COL_NATURE = 14
-_COL_HEIGHT = 15
-_COL_WEIGHT = 16
+_COL_LANDMARK_CODE = 2
+_COL_SPECIES = 3
+_COL_GENDER = 4
+_COL_ALPHA = 5
+_COL_SHINY = 6
+_COL_HP = 7
+_COL_ATK = 8
+_COL_DEF = 9
+_COL_SPA = 10
+_COL_SPD = 11
+_COL_SPE = 12
+_COL_LEVEL = 13
+_COL_ABILITY = 14
+_COL_NATURE = 15
+_COL_HEIGHT = 16
+_COL_WEIGHT = 17
 
 
 class _NumericItem(QTableWidgetItem):
@@ -70,8 +71,8 @@ class ResultsTable(QTableWidget):
             self.setColumnWidth(col, 28)
             hdr.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
         hdr.setSectionResizeMode(_COL_SPECIES, QHeaderView.ResizeMode.Stretch)
-        for col in (_COL_ADVANCE, _COL_LANDMARK, _COL_GENDER, _COL_LEVEL, _COL_ABILITY,
-                    _COL_NATURE, _COL_HEIGHT, _COL_WEIGHT):
+        for col in (_COL_ADVANCE, _COL_LANDMARK, _COL_LANDMARK_CODE, _COL_GENDER, _COL_LEVEL,
+                    _COL_ABILITY, _COL_NATURE, _COL_HEIGHT, _COL_WEIGHT):
             hdr.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
         for col in (_COL_HP, _COL_ATK, _COL_DEF, _COL_SPA, _COL_SPD, _COL_SPE):
             self.setColumnWidth(col, 36)
@@ -108,6 +109,7 @@ class ResultsTable(QTableWidget):
 
         self.setItem(row, _COL_ADVANCE, _ncell(r.advance))
         self.setItem(row, _COL_LANDMARK, _ncell(r.catch_order + 1))
+        self.setItem(row, _COL_LANDMARK_CODE, _cell(r.identifier))
         self.setItem(
             row,
             _COL_SPECIES,
